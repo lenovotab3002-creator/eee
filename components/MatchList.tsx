@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Match } from '../types';
 import MatchCard from './MatchCard';
@@ -11,12 +10,28 @@ interface MatchListProps {
 
 type FilterType = 'all' | 'friends' | 'two' | 'three' | 'others';
 
+const handleAnimatedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget;
+    button.classList.remove('animate-fade-outline');
+    void button.offsetWidth;
+    button.classList.add('animate-fade-outline');
+    button.addEventListener('animationend', () => {
+        button.classList.remove('animate-fade-outline');
+    }, { once: true });
+};
+
 const FilterButton: React.FC<{ label: string; isActive: boolean; onClick: () => void; }> = ({ label, isActive, onClick }) => {
-    const baseClasses = "w-full text-left px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+    const baseClasses = "w-full text-left px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 focus:outline-none";
     const activeClasses = "bg-blue-700 text-white shadow";
     const inactiveClasses = "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-800";
     return (
-        <button onClick={onClick} className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}>
+        <button 
+            onClick={(e) => {
+                handleAnimatedClick(e);
+                onClick();
+            }} 
+            className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+        >
             {label}
         </button>
     );
@@ -46,7 +61,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, onStartStudying, onFindN
 
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="text-center mb-10">
         <h2 className="text-4xl font-extrabold text-slate-800">We Found Your Study Crew!</h2>
         <p className="text-slate-500 mt-2 text-lg">Here are your top matches based on your profile.</p>
@@ -83,8 +98,11 @@ const MatchList: React.FC<MatchListProps> = ({ matches, onStartStudying, onFindN
             )}
             <div className="text-center mt-12">
                 <button 
-                onClick={onFindNew}
-                className="bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors"
+                    onClick={(e) => {
+                        handleAnimatedClick(e);
+                        onFindNew();
+                    }}
+                    className="bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors focus:outline-none"
                 >
                 Refine Profile & Search Again
                 </button>

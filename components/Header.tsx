@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import LeaderboardModal from './LeaderboardModal';
+import React from 'react';
 
 interface HeaderProps {
     onLogoClick: () => void;
+    isNavVisible: boolean;
+    onLeaderboardClick: () => void;
+    onFriendsClick: () => void;
+    isLoggedIn: boolean;
+    onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onLogoClick }) => {
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-
+const Header: React.FC<HeaderProps> = ({ onLogoClick, isNavVisible, onLeaderboardClick, onFriendsClick, isLoggedIn, onLogout }) => {
   return (
-    <>
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 max-w-5xl flex justify-between items-center">
           <div 
@@ -25,34 +26,46 @@ const Header: React.FC<HeaderProps> = ({ onLogoClick }) => {
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">StudySphere</h1>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <button
-                className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 hover:text-slate-800 transition-colors font-semibold"
-                aria-label="Open friends list"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0115 11.47V11a1 1 0 112 0v.47a7 7 0 01-1.252 4.225 10.024 10.024 0 00-2.816.305zM5 11.47a5 5 0 013.43-1.74 6.97 6.97 0 00-1.5 4.33c0 .34.024.673.07 1A10.024 10.024 0 004.252 15.695 7 7 0 013 11.47V11a1 1 0 112 0v.47z" />
-                </svg>
-                <span>Friends</span>
-            </button>
-            <button
-              onClick={() => setIsLeaderboardOpen(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 hover:text-slate-800 transition-colors font-semibold"
-              aria-label="Open leaderboard"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M11.918 8.166a.5.5 0 00-.836.582l1.32 1.98-1.423.844a.5.5 0 00-.214.658l1.785 2.976a.5.5 0 00.87-.52l-1.32-1.98 1.423-.844a.5.5 0 00.214-.658L12.788 8.3A.5.5 0 0011.918 8.166z"/>
-                <path d="M12.5 3.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
-                <path d="M7 11.232a1.5 1.5 0 10-2.023 2.023A1.5 1.5 0 007 11.232zM4.5 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
-                <path fillRule="evenodd" d="M15.5 3a.5.5 0 01.5.5v13a.5.5 0 01-.5.5h-11a.5.5 0 01-.5-.5v-13a.5.5 0 01.5-.5h11zm-10.5 1a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h9a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-9z" clipRule="evenodd"/>
-              </svg>
-              <span>Leaderboard</span>
-            </button>
-          </div>
+          {isLoggedIn && (
+            <nav className="flex items-center space-x-2">
+              {isNavVisible && (
+                <>
+                  <button
+                    onClick={onFriendsClick}
+                    className="font-semibold text-slate-600 hover:text-blue-700 transition-colors flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-100"
+                    aria-label="Open friends list"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                     </svg>
+                    <span>Friends</span>
+                  </button>
+                  <button
+                    onClick={onLeaderboardClick}
+                    className="font-semibold text-slate-600 hover:text-blue-700 transition-colors flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-100"
+                    aria-label="Open leaderboard"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.926 5.432l-2.138-.428A2.004 2.004 0 0014 3h-2a1 1 0 100 2h1.268a2 2 0 011.986 1.732l.334 1.668a3 3 0 11-5.176 0l.334-1.668A2 2 0 0110.732 5H12a1 1 0 100-2H8a2 2 0 00-1.788 1.004l-2.138.428A3.004 3.004 0 002 8.24v5.52a3 3 0 003 3h10a3 3 0 003-3V8.24a3.004 3.004 0 00-2.074-2.808zM16 13.76a1 1 0 01-1 1H5a1 1 0 01-1-1V8.24a1 1 0 01.691-.94l2.138-.427A4.003 4.003 0 0110 3.999a4.003 4.003 0 013.17 2.873l2.139.427a1 1 0 01.691.94v5.52z"/>
+                     </svg>
+                    <span>Leaderboard</span>
+                  </button>
+                </>
+              )}
+              <button
+                onClick={onLogout}
+                className="font-semibold text-slate-600 hover:text-red-600 transition-colors flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-100"
+                aria-label="Sign Out"
+              >
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                   <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                 </svg>
+                <span>Sign Out</span>
+              </button>
+            </nav>
+          )}
         </div>
       </header>
-      <LeaderboardModal isOpen={isLeaderboardOpen} onClose={() => setIsLeaderboardOpen(false)} />
-    </>
   );
 };
 

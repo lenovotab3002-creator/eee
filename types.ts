@@ -20,7 +20,7 @@ export interface MatchedGroup {
   name: string;
   members: StudentProfile[];
   capacity: number;
-  matchReason: string;
+  matchReason:string;
   topic: string;
 }
 
@@ -28,6 +28,7 @@ export type Match = MatchedStudent | MatchedGroup;
 
 
 export enum View {
+  Login,
   Home,
   Profile,
   Matches,
@@ -37,6 +38,7 @@ export enum View {
 export interface StudySessionData {
     match: Match;
     subject: string;
+    userProfile: StudentProfile;
 }
 
 export interface StudyPlan {

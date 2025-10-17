@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StudySessionData, StudyPlan, ChatMessage, StudentProfile } from '../types';
-import { generateStudyPlan, generatePracticeProblem } from '../services/geminiService';
+import { generateStudyPlan, generatePracticeProblem, generateChatResponse } from '../services/geminiService';
+import Whiteboard from './Whiteboard'; // Import the new Whiteboard component
 import '../styles/customScrollbar.css';
 
 interface CollaborationSpaceProps {
@@ -39,20 +40,29 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isProblemLoading, setIsProblemLoading] = useState<boolean>(false);
-  const [whiteboardText, setWhiteboardText] = useState<string>(`Shared notes for ${sessionData.subject}...\n\n`);
   const [sentFriendRequestIds, setSentFriendRequestIds] = useState<Set<number>>(new Set());
   const [isFriendDropdownOpen, setIsFriendDropdownOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState<string>('');
+  const [isPartnerTyping, setIsPartnerTyping] = useState<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const friendDropdownRef = useRef<HTMLDivElement>(null);
 
-  // FIX: Destructuring match into a stable const helps TypeScript's control flow analysis
-  // correctly narrow the type within the ternary operator below.
-  const { match } = sessionData;
+  const match = sessionData.match;
+  const { userProfile } = sessionData;
   const isGroupSession = 'members' in match;
   const participants: StudentProfile[] = isGroupSession ? match.members : [match];
   const sessionName = match.name;
+  
+  const handleAnimatedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const button = e.currentTarget;
+    button.classList.remove('animate-fade-outline');
+    void button.offsetWidth;
+    button.classList.add('animate-fade-outline');
+    button.addEventListener('animationend', () => {
+        button.classList.remove('animate-fade-outline');
+    }, { once: true });
+  };
 
   useEffect(() => {
     const fetchStudyPlan = async () => {
@@ -70,7 +80,6 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
     };
     fetchStudyPlan();
 
-    // Initial chat message from a partner/group member
     const firstParticipant = participants[0];
     setChatMessages([
         {
@@ -122,33 +131,48 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
   
   const handleAddFriend = (friendId: number) => {
     setSentFriendRequestIds(prev => new Set(prev).add(friendId));
-    setIsFriendDropdownOpen(false); // Close dropdown after selection
   };
   
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentMessage.trim()) return;
+    if (!currentMessage.trim() || isPartnerTyping) return;
 
     const newUserMessage: ChatMessage = {
         sender: 'You',
         text: currentMessage.trim(),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-
-    setChatMessages(prev => [...prev, newUserMessage]);
+    
+    const updatedMessages = [...chatMessages, newUserMessage];
+    setChatMessages(updatedMessages);
     setCurrentMessage('');
+    setIsPartnerTyping(true);
 
-    // Simulate partner/group reply
-    setTimeout(() => {
-        // Pick a random participant to reply (who is not the user)
-        const replyingParticipant = participants[Math.floor(Math.random() * participants.length)];
+    try {
+        const aiResponse = await generateChatResponse(
+            updatedMessages, 
+            participants, 
+            sessionData.subject, 
+            userProfile.name
+        );
+        
         const partnerReply: ChatMessage = {
-            sender: replyingParticipant.name,
-            text: "That's a great point! What do you think about the first discussion question?",
+            sender: aiResponse.sender,
+            text: aiResponse.text,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setChatMessages(prev => [...prev, partnerReply]);
-    }, 1500);
+    } catch (error) {
+        console.error("Failed to get AI chat response:", error);
+        const errorReply: ChatMessage = {
+            sender: participants[0]?.name || 'System',
+            text: "Oops, my connection timed out. Could you repeat that?",
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setChatMessages(prev => [...prev, errorReply]);
+    } finally {
+        setIsPartnerTyping(false);
+    }
   };
   
   const renderAddFriendButton = () => {
@@ -163,24 +187,28 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
                     <span>Add Friends</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${isFriendDropdownOpen ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                 </button>
-                {isFriendDropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                        <div className="py-1" role="menu" aria-orientation="vertical">
-                            {participants.map(member => (
-                                <button
-                                    key={member.id}
-                                    onClick={() => handleAddFriend(member.id)}
-                                    disabled={sentFriendRequestIds.has(member.id)}
-                                    className="w-full text-left flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    role="menuitem"
-                                >
-                                    <span>Add {member.name}</span>
-                                    {sentFriendRequestIds.has(member.id) && <span className="text-xs text-green-600">Sent!</span>}
-                                </button>
-                            ))}
-                        </div>
+                <div 
+                    className={`origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 transition-all duration-200 ease-out 
+                    ${isFriendDropdownOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'}`}
+                >
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                        {participants.map(member => (
+                            <button
+                                key={member.id}
+                                onClick={() => handleAddFriend(member.id)}
+                                disabled={sentFriendRequestIds.has(member.id)}
+                                className="w-full text-left flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                role="menuitem"
+                            >
+                                <div className="flex items-center">
+                                    <img src={member.avatarUrl} alt={member.name} className="w-7 h-7 rounded-full mr-3" />
+                                    <span>{member.name}</span>
+                                </div>
+                                {sentFriendRequestIds.has(member.id) && <span className="text-xs text-green-600">Sent!</span>}
+                            </button>
+                        ))}
                     </div>
-                )}
+                </div>
             </div>
         );
     }
@@ -215,7 +243,13 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
 
   return (
     <div className="animate-fade-in">
-      <button onClick={onBack} className="mb-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-slate-700 bg-slate-200 hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition">
+      <button 
+        onClick={(e) => {
+            handleAnimatedClick(e);
+            onBack();
+        }} 
+        className="mb-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-slate-700 bg-slate-200 hover:bg-slate-300 focus:outline-none transition"
+      >
         &larr; Back to Matches
       </button>
 
@@ -232,11 +266,7 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
               <h3 className="text-xl font-semibold text-slate-700">Shared Whiteboard</h3>
               {renderAddFriendButton()}
             </div>
-            <textarea
-              className="w-full h-96 p-4 bg-slate-800 text-slate-100 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition resize-none font-mono text-sm"
-              value={whiteboardText}
-              onChange={(e) => setWhiteboardText(e.target.value)}
-            />
+            <Whiteboard />
           </div>
 
           {/* AI Study Assistant */}
@@ -270,9 +300,12 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
                     <p className="bg-green-50 p-3 rounded-md mt-1 text-green-800 border border-green-200">{studyPlan.practiceProblem.solution}</p>
                   </details>
                   <button
-                    onClick={handleNewProblem}
+                    onClick={(e) => {
+                      handleAnimatedClick(e);
+                      handleNewProblem();
+                    }}
                     disabled={isProblemLoading}
-                    className="mt-4 w-full text-sm font-semibold py-2 px-4 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="mt-4 w-full text-sm font-semibold py-2 px-4 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus:outline-none"
                   >
                     {isProblemLoading ? (
                       <>
@@ -314,6 +347,18 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
                 </div>
               );
             })}
+             {isPartnerTyping && (
+                <div className="flex items-end gap-2 justify-start">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 animate-pulse" />
+                    <div className="max-w-xs md:max-w-md p-3 rounded-2xl bg-slate-200 text-slate-800 rounded-bl-none">
+                        <div className="flex items-center space-x-1.5">
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                        </div>
+                    </div>
+                </div>
+            )}
           </div>
           <form onSubmit={handleSendMessage} className="p-3 border-t bg-white rounded-b-lg">
             <div className="flex items-center space-x-2">
@@ -324,7 +369,11 @@ const CollaborationSpace: React.FC<CollaborationSpaceProps> = ({ sessionData, on
                 placeholder="Type your message..."
                 className="w-full py-2 px-4 bg-slate-100 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-600 transition"
               />
-              <button type="submit" className="bg-blue-700 text-white rounded-full p-2.5 hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-600 disabled:bg-blue-400 flex-shrink-0">
+              <button 
+                type="submit" 
+                onClick={handleAnimatedClick}
+                className="bg-blue-700 text-white rounded-full p-2.5 hover:bg-blue-800 transition-colors focus:outline-none disabled:bg-blue-400 flex-shrink-0"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform -rotate-90" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                 </svg>

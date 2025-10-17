@@ -23,6 +23,16 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
     const [filter, setFilter] = useState<FilterType>('all');
     const [searchQuery, setSearchQuery] = useState('');
     
+    const handleAnimatedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const button = e.currentTarget;
+        button.classList.remove('animate-fade-outline');
+        void button.offsetWidth;
+        button.classList.add('animate-fade-outline');
+        button.addEventListener('animationend', () => {
+            button.classList.remove('animate-fade-outline');
+        }, { once: true });
+    };
+
     useEffect(() => {
         if (isOpen) {
           const timer = setTimeout(() => setIsAnimating(true), 10);
@@ -58,7 +68,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
     if (!isOpen) return null;
     
     const filterPillClasses = (isActive: boolean) => `
-        px-3 py-1 text-sm font-semibold rounded-full transition-colors cursor-pointer
+        px-3 py-1 text-sm font-semibold rounded-full transition-colors cursor-pointer focus:outline-none
         ${isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}
     `;
 
@@ -78,8 +88,11 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
             >
                 <div className="p-6 relative border-b">
                     <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+                        onClick={(e) => {
+                            handleAnimatedClick(e);
+                            onClose();
+                        }}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
                         aria-label="Close"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,9 +114,9 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ isOpen, onClose }) 
                             </svg>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <div className={filterPillClasses(filter === 'all')} onClick={() => setFilter('all')}>All</div>
-                            <div className={filterPillClasses(filter === 'groups')} onClick={() => setFilter('groups')}>Groups</div>
-                            <div className={filterPillClasses(filter === 'individuals')} onClick={() => setFilter('individuals')}>Individuals</div>
+                            <button className={filterPillClasses(filter === 'all')} onClick={(e) => { handleAnimatedClick(e); setFilter('all'); }}>All</button>
+                            <button className={filterPillClasses(filter === 'groups')} onClick={(e) => { handleAnimatedClick(e); setFilter('groups'); }}>Groups</button>
+                            <button className={filterPillClasses(filter === 'individuals')} onClick={(e) => { handleAnimatedClick(e); setFilter('individuals'); }}>Individuals</button>
                         </div>
                     </div>
                 </div>

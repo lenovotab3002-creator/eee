@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { StudentProfile, MatchedStudent, StudyPlan } from '../types';
+import { StudentProfile, MatchedStudent, StudyPlan, ChatMessage } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -150,5 +150,127 @@ export async function generatePracticeProblem(subject: string): Promise<StudyPla
   } catch (error) {
       console.error("Gemini API call failed for generatePracticeProblem:", error);
       throw new Error("Failed to generate a new practice problem.");
+  }
+}
+
+export async function generateChatResponse(
+  chatHistory: ChatMessage[],
+  participants: StudentProfile[],
+  subject: string,
+  userName: string
+): Promise<{sender: string, text: string}> {
+  const model = "gemini-2.5-flash";
+  const participantNames = participants.map(p => p.name).join(', ');
+  
+  const formattedHistory = chatHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
+
+  const prompt = `
+    You are role-playing as a group of students in a study session.
+    The topic is "${subject}".
+    The students in the group are: ${participantNames}.
+    The user you are talking to is named "${userName}". When you see the sender "You", that is "${userName}".
+
+    Below is the recent chat history. Your task is to generate the next response in the conversation.
+    Choose one of the students (${participantNames}) to speak. The response should be natural, on-topic, and in character for a student.
+    Keep the response concise and conversational.
+
+    Chat History:
+    ${formattedHistory}
+
+    Now, generate the next message.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            sender: { 
+              type: Type.STRING,
+              description: `The name of the student who is speaking. Must be one of: ${participantNames}.`
+            },
+            text: { 
+              type: Type.STRING,
+              description: "The content of the message."
+            }
+          },
+          required: ["sender", "text"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+
+  } catch (error) {
+    console.error("Gemini API call failed for generateChatResponse:", error);
+    // Return a fallback response on error
+    return {
+        sender: participants[0]?.name || "Alex",
+        text: "Sorry, I got a bit distracted. What were we saying?"
+    };
+  }
+}
+
+export async function generateGroupChatSnippet(
+  participants: StudentProfile[],
+  subject: string,
+  chatHistory: ChatMessage[]
+): Promise<{sender: string, text: string}> {
+  const model = "gemini-2.5-flash";
+  const participantNames = participants.map(p => p.name).join(', ');
+  
+  const formattedHistory = chatHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
+
+  const prompt = `
+    You are observing a study group session.
+    The topic is "${subject}".
+    The students in the group are: ${participantNames}.
+
+    Below is their recent chat history. Your task is to generate the very next message in the conversation.
+    Choose one of the students (${participantNames}) to speak. The response should be natural, on-topic, and in character for a student.
+    Keep the response concise and conversational.
+
+    Chat History:
+    ${formattedHistory}
+
+    Generate the next single message from one of the participants.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            sender: { 
+              type: Type.STRING,
+              description: `The name of the student who is speaking. Must be one of: ${participantNames}.`
+            },
+            text: { 
+              type: Type.STRING,
+              description: "The content of the message."
+            }
+          },
+          required: ["sender", "text"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+
+  } catch (error) {
+    console.error("Gemini API call failed for generateGroupChatSnippet:", error);
+    // Return a fallback response on error
+    return {
+        sender: participants[Math.floor(Math.random() * participants.length)]?.name || "Student",
+        text: "Interesting point. What does everyone else think?"
+    };
   }
 }
