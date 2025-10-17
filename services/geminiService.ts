@@ -7,6 +7,20 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+const handleGeminiError = (error: any, functionName: string): never => {
+  console.error(`Gemini API call failed for ${functionName}:`, error);
+  let message = `An error occurred with the AI service. Please try again later.`;
+  
+  const errorMessage = error.toString();
+  if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
+      message = "You're making requests too quickly! Please wait a moment and try again.";
+  } else if (errorMessage.includes('API_KEY_INVALID')) {
+      message = "The API key is invalid. Please check your configuration.";
+  }
+  
+  throw new Error(message);
+};
+
 export async function findMatches(
   userProfile: StudentProfile,
   allProfiles: StudentProfile[]
@@ -73,8 +87,7 @@ export async function findMatches(
     return matchedStudents;
 
   } catch (error) {
-    console.error("Gemini API call failed for findMatches:", error);
-    throw new Error("Failed to fetch matches from AI service.");
+    handleGeminiError(error, 'findMatches');
   }
 }
 
@@ -119,8 +132,7 @@ export async function generateStudyPlan(subject: string): Promise<StudyPlan> {
 
     return JSON.parse(response.text);
   } catch (error) {
-      console.error("Gemini API call failed for generateStudyPlan:", error);
-      throw new Error("Failed to generate study plan.");
+    handleGeminiError(error, 'generateStudyPlan');
   }
 }
 
@@ -148,8 +160,7 @@ export async function generatePracticeProblem(subject: string): Promise<StudyPla
 
     return JSON.parse(response.text);
   } catch (error) {
-      console.error("Gemini API call failed for generatePracticeProblem:", error);
-      throw new Error("Failed to generate a new practice problem.");
+    handleGeminiError(error, 'generatePracticeProblem');
   }
 }
 
@@ -206,7 +217,7 @@ export async function generateChatResponse(
     return JSON.parse(response.text);
 
   } catch (error) {
-    console.error("Gemini API call failed for generateChatResponse:", error);
+    handleGeminiError(error, 'generateChatResponse');
     // Return a fallback response on error
     return {
         sender: participants[0]?.name || "Alex",
@@ -266,7 +277,7 @@ export async function generateGroupChatSnippet(
     return JSON.parse(response.text);
 
   } catch (error) {
-    console.error("Gemini API call failed for generateGroupChatSnippet:", error);
+    handleGeminiError(error, 'generateGroupChatSnippet');
     // Return a fallback response on error
     return {
         sender: participants[Math.floor(Math.random() * participants.length)]?.name || "Student",

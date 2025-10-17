@@ -3,6 +3,7 @@
 export interface StudentProfile {
   id: number;
   name: string;
+  email: string;
   subjectsCanHelp: string[];
   subjectsHelpNeeded: string[];
   availability: string[];

@@ -35,6 +35,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 1,
     name: "Alex",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "alex@example.com",
     subjectsCanHelp: ["Calculus", "Linear Algebra"],
     subjectsHelpNeeded: ["Quantum Physics", "Organic Chemistry"],
     availability: ["Weekday Evenings", "Weekend Afternoons"],
@@ -44,6 +46,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 2,
     name: "Brenda",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "brenda@example.com",
     subjectsCanHelp: ["World History", "Literary Analysis"],
     subjectsHelpNeeded: ["Data Structures", "Machine Learning"],
     availability: ["Weekday Mornings", "Flexible"],
@@ -53,6 +57,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 3,
     name: "Charlie",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "charlie@example.com",
     subjectsCanHelp: ["Data Structures", "Machine Learning"],
     subjectsHelpNeeded: ["Calculus", "Microeconomics"],
     availability: ["Weekend Mornings", "Weekend Afternoons"],
@@ -62,6 +68,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 4,
     name: "Dana",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "dana@example.com",
     subjectsCanHelp: ["Quantum Physics", "Organic Chemistry"],
     subjectsHelpNeeded: ["Art History", "Literary Analysis"],
     availability: ["Weekday Afternoons", "Weekday Evenings"],
@@ -72,6 +80,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 5,
     name: "Eli",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "eli@example.com",
     subjectsCanHelp: ["Microeconomics", "Art History"],
     subjectsHelpNeeded: ["Linear Algebra"],
     availability: ["Flexible"],
@@ -81,6 +91,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
    {
     id: 6,
     name: "Fiona",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "fiona@example.com",
     subjectsCanHelp: ["Data Structures", "Calculus"],
     subjectsHelpNeeded: ["Machine Learning", "World History"],
     availability: ["Weekday Evenings", "Weekend Mornings"],
@@ -90,6 +102,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
   {
     id: 7,
     name: "George",
+    // FIX: Added missing 'email' property to conform to StudentProfile type.
+    email: "george@example.com",
     subjectsCanHelp: ["Literary Analysis"],
     subjectsHelpNeeded: ["Quantum Physics", "Organic Chemistry"],
     availability: ["Weekday Mornings", "Weekday Afternoons"],

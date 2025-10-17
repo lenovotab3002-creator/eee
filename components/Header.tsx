@@ -1,7 +1,8 @@
 import React from 'react';
 
 interface HeaderProps {
-    onLogoClick: () => void;
+    isProfileCreated: boolean;
+    onProfileClick: () => void;
     isNavVisible: boolean;
     onLeaderboardClick: () => void;
     onFriendsClick: () => void;
@@ -9,13 +10,12 @@ interface HeaderProps {
     onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onLogoClick, isNavVisible, onLeaderboardClick, onFriendsClick, isLoggedIn, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ isProfileCreated, onProfileClick, isNavVisible, onLeaderboardClick, onFriendsClick, isLoggedIn, onLogout }) => {
   return (
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 max-w-5xl flex justify-between items-center">
           <div 
-            className="flex items-center space-x-3 cursor-pointer"
-            onClick={onLogoClick}
+            className="flex items-center space-x-3"
           >
             <div className="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,6 +24,21 @@ const Header: React.FC<HeaderProps> = ({ onLogoClick, isNavVisible, onLeaderboar
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">StudySphere</h1>
+            {isProfileCreated && (
+                <>
+                    <div className="h-6 w-px bg-slate-300" />
+                    <button
+                        onClick={onProfileClick}
+                        className="font-semibold text-slate-600 hover:text-blue-700 transition-colors flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-slate-100"
+                        aria-label="Open profile editor"
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                       </svg>
+                      <span>Profile</span>
+                    </button>
+                </>
+            )}
           </div>
           
           {isLoggedIn && (

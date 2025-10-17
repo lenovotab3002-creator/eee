@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Match, StudentProfile, MatchedStudent, MatchedGroup, ChatMessage } from '../types';
-import { generateGroupChatSnippet } from '../services/geminiService';
+import React from 'react';
+import { Match, MatchedStudent, MatchedGroup } from '../types';
 
 interface MatchCardProps {
   match: Match;
@@ -66,42 +65,6 @@ const IndividualMatchCard: React.FC<{ match: MatchedStudent; onStartStudying: (m
 );
 
 const GroupMatchCard: React.FC<{ match: MatchedGroup; onStartStudying: (match: Match) => void }> = ({ match, onStartStudying }) => {
-    const [chatPreview, setChatPreview] = useState<ChatMessage[]>([]);
-    const [isGenerating, setIsGenerating] = useState(true);
-    const chatHistoryRef = useRef<ChatMessage[]>([]);
-
-    useEffect(() => {
-        chatHistoryRef.current = chatPreview;
-    }, [chatPreview]);
-    
-    useEffect(() => {
-        const generateMessage = async () => {
-            setIsGenerating(true);
-            try {
-                const response = await generateGroupChatSnippet(match.members, match.topic, chatHistoryRef.current);
-                const newMessage: ChatMessage = {
-                    ...response,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                };
-                setChatPreview(prev => [...prev, newMessage].slice(-2));
-            } catch (error) {
-                console.error("Failed to generate chat snippet", error);
-            } finally {
-                setIsGenerating(false);
-            }
-        };
-        
-        // Stagger initial API calls and increase interval to avoid rate limiting
-        const initialTimeout = setTimeout(generateMessage, Math.random() * 4000 + 1000); // More staggered start: 1-5s
-        const intervalId = setInterval(generateMessage, 15000); // Slower updates: every 15s
-
-        return () => {
-            clearTimeout(initialTimeout);
-            clearInterval(intervalId);
-        };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [match.members, match.topic]);
-    
     return (
     <>
         <div className="p-6 flex-grow">
@@ -126,45 +89,14 @@ const GroupMatchCard: React.FC<{ match: MatchedGroup; onStartStudying: (match: M
             </div>
             
             <div className="mt-4 pt-4 border-t border-slate-200">
-                <h4 className="font-semibold text-slate-600 mb-2 text-sm flex items-center">
-                    <span className="relative flex h-2 w-2 mr-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    Live Discussion
-                </h4>
-                <div className="space-y-3 text-sm h-16 flex flex-col justify-end">
-                    {isGenerating && chatPreview.length === 0 && (
-                        <div className="flex items-center gap-2 animate-pulse">
-                            <div className="w-6 h-6 rounded-full bg-slate-200 flex-shrink-0"></div>
-                            <div className="flex-grow space-y-1.5">
-                                <div className="h-2 w-1/4 bg-slate-200 rounded"></div>
-                                <div className="h-2 w-3/4 bg-slate-200 rounded"></div>
-                            </div>
+                <h4 className="font-semibold text-slate-600 mb-2 text-sm">Members in this Group</h4>
+                <div className="flex flex-wrap gap-2">
+                    {match.members.map(member => (
+                        <div key={member.id} className="flex items-center space-x-2 bg-slate-100 px-2 py-1 rounded-full">
+                            <img src={member.avatarUrl} alt={member.name} className="w-5 h-5 rounded-full" />
+                            <span className="text-xs font-medium text-slate-700">{member.name}</span>
                         </div>
-                    )}
-                    {chatPreview.slice(-1).map((msg, index) => {
-                        const member = match.members.find(m => m.name === msg.sender);
-                        return (
-                            <div key={index} className="flex items-start gap-2 animate-fade-in">
-                                <img src={member?.avatarUrl} alt={member?.name} className="w-6 h-6 rounded-full flex-shrink-0" />
-                                <div>
-                                    <p className="font-bold text-slate-800 text-xs">{msg.sender}</p>
-                                    <p className="text-slate-600 leading-tight">{msg.text}</p>
-                                </div>
-                            </div>
-                        )
-                    })}
-                    {isGenerating && chatPreview.length > 0 && (
-                        <div className="flex items-start gap-2 animate-fade-in">
-                             <div className="w-6 h-6 rounded-full bg-slate-200 flex-shrink-0" />
-                             <div className="flex items-center space-x-1 pt-2">
-                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                            </div>
-                        </div>
-                    )}
+                    ))}
                 </div>
             </div>
         </div>

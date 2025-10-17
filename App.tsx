@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StudentProfile, MatchedStudent, StudySessionData, View, Match } from './types';
 import { MOCK_PROFILES, MOCK_GROUPS } from './constants';
 import { findMatches } from './services/geminiService';
+import { updateProfile } from './services/authService';
 import Header from './components/Header';
 import ProfileForm from './components/ProfileForm';
 import MatchList from './components/MatchList';
@@ -10,6 +11,10 @@ import LandingPage from './components/LandingPage';
 import LeaderboardModal from './components/LeaderboardModal';
 import FriendsModal from './components/FriendsModal';
 import LoginModal from './components/LoginModal';
+
+// A subset of the profile data that comes from the form
+type ProfileFormData = Omit<StudentProfile, 'id' | 'avatarUrl' | 'isFriend' | 'email'>;
+
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>(View.Login);
@@ -37,13 +42,24 @@ const App: React.FC = () => {
     }, 350);
   };
 
-  const handleProfileSubmit = async (profile: StudentProfile) => {
+  const handleProfileSubmit = async (profileData: ProfileFormData) => {
+    if (!userProfile) return;
+
     setIsLoading(true);
     setError(null);
-    setUserProfile(profile);
+    
+    const updatedProfile: StudentProfile = {
+      ...userProfile,
+      ...profileData,
+      avatarUrl: `https://picsum.photos/seed/${profileData.name.toLowerCase().replace(/\s+/g, '-')}/200`
+    };
+
     try {
+      await updateProfile(updatedProfile);
+      setUserProfile(updatedProfile);
+      
       await new Promise(resolve => setTimeout(resolve, 1500));
-      const foundMatches = await findMatches(profile, MOCK_PROFILES);
+      const foundMatches = await findMatches(updatedProfile, MOCK_PROFILES);
       
       const allMatches: Match[] = [...foundMatches, ...MOCK_GROUPS];
       
@@ -51,7 +67,8 @@ const App: React.FC = () => {
       navigateTo(View.Matches);
     } catch (err) {
       console.error("Error finding matches:", err);
-      setError("Sorry, we couldn't find matches at this time. Please try again later.");
+      // The error message from geminiService is now user-friendly
+      setError((err as Error).message);
       navigateTo(View.Profile);
     } finally {
       setIsLoading(false);
@@ -94,8 +111,13 @@ const App: React.FC = () => {
     navigateTo(View.Login);
   };
 
-  const handleLoginSuccess = () => {
+  const handleAuthSuccess = (user: StudentProfile) => {
+    setUserProfile(user);
     navigateTo(View.Home);
+  };
+
+  const handleProfileClick = () => {
+    navigateTo(View.Profile, 'backward');
   };
   
   const renderContent = () => {
@@ -108,38 +130,30 @@ const App: React.FC = () => {
 
     switch (view) {
       case View.Login:
-        return <LoginModal onLoginSuccess={handleLoginSuccess} onSignupSuccess={handleLoginSuccess} />;
+        return <LoginModal onLoginSuccess={handleAuthSuccess} onSignupSuccess={handleAuthSuccess} />;
       case View.Home:
         return <LandingPage onGetStarted={() => navigateTo(View.Profile)} />;
       case View.Profile:
-        return <ProfileForm onSubmit={handleProfileSubmit} isLoading={isLoading} />;
+        return <ProfileForm onSubmit={handleProfileSubmit} isLoading={isLoading} initialName={userProfile?.name} />;
       case View.Matches:
         return <MatchList matches={matches} onStartStudying={handleStartStudying} onFindNew={() => navigateTo(View.Profile, 'backward')}/>;
       case View.Collaboration:
         return currentSession && <CollaborationSpace sessionData={currentSession} onBack={handleBackToMatches} />;
       default:
-        return <LoginModal onLoginSuccess={handleLoginSuccess} onSignupSuccess={handleLoginSuccess} />;
+        return <LoginModal onLoginSuccess={handleAuthSuccess} onSignupSuccess={handleAuthSuccess} />;
     }
   };
   
-  const handleLogoClick = () => {
-    // FIX: The original condition `view !== View.Login` was always true because the Header
-    // is only displayed on non-login pages, causing a TypeScript error. 
-    // The check is now for `view !== View.Home` to prevent redundant navigation.
-    if (view !== View.Home) {
-        navigateTo(View.Home, 'backward');
-    }
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col">
-      {view !== View.Login && (
+      {view !== View.Login && userProfile && (
         <Header 
-          onLogoClick={handleLogoClick}
+          isProfileCreated={!!userProfile?.subjectsCanHelp?.length}
+          onProfileClick={handleProfileClick}
           isNavVisible={view === View.Matches || view === View.Collaboration}
           onLeaderboardClick={() => setIsLeaderboardOpen(true)}
           onFriendsClick={() => setIsFriendsModalOpen(true)}
-          isLoggedIn={true}
+          isLoggedIn={!!userProfile}
           onLogout={handleLogout}
         />
       )}
