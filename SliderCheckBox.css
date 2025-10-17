@@ -42,11 +42,11 @@
 }
 
 input:checked + .slider {
-  background-color: #2563eb; /* blue-600 from Tailwind */
+  background-color: #1d4ed8; /* blue-700 from Tailwind */
 }
 
 input:focus-visible + .slider {
-  box-shadow: 0 0 0 2px #f8fafc, 0 0 0 4px #2563eb; /* focus ring using bg-slate-50 color */
+  box-shadow: 0 0 0 2px #f8fafc, 0 0 0 4px #1d4ed8; /* focus ring using bg-slate-50 color */
 }
 
 input:checked + .slider:before {

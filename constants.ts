@@ -1,5 +1,5 @@
 
-import { StudentProfile } from './types';
+import { StudentProfile, MatchedGroup } from './types';
 
 export const SUBJECTS = [
   "Calculus",
@@ -66,7 +66,8 @@ export const MOCK_PROFILES: StudentProfile[] = [
     subjectsHelpNeeded: ["Art History", "Literary Analysis"],
     availability: ["Weekday Afternoons", "Weekday Evenings"],
     studyMethod: "Active Discussion & Quizzing",
-    avatarUrl: "https://picsum.photos/seed/dana/200"
+    avatarUrl: "https://picsum.photos/seed/dana/200",
+    isFriend: true,
   },
   {
     id: 5,
@@ -95,4 +96,23 @@ export const MOCK_PROFILES: StudentProfile[] = [
     studyMethod: "Active Discussion & Quizzing",
     avatarUrl: "https://picsum.photos/seed/george/200"
   }
+];
+
+export const MOCK_GROUPS: MatchedGroup[] = [
+    {
+        id: 101,
+        name: 'Data Structures Duo',
+        topic: 'Data Structures',
+        members: [MOCK_PROFILES[2], MOCK_PROFILES[5]], // Charlie & Fiona
+        capacity: 3,
+        matchReason: 'This focused pair is looking for one more member to master algorithms and data structures through intensive problem-solving sessions.'
+    },
+    {
+        id: 102,
+        name: 'Quantum Quartet',
+        topic: 'Quantum Physics',
+        members: [MOCK_PROFILES[0], MOCK_PROFILES[3], MOCK_PROFILES[6]], // Alex, Dana, George
+        capacity: 4,
+        matchReason: 'A dynamic group tackling the complexities of quantum mechanics. They have one spot left for a dedicated student who enjoys active discussions.'
+    }
 ];

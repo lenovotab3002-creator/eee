@@ -6,9 +6,10 @@ import '../styles/customScrollbar.css';
 
 interface ProfileFormProps {
   onSubmit: (profile: StudentProfile) => void;
+  isLoading: boolean;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit, isLoading }) => {
   const [name, setName] = useState('');
   const [subjectsCanHelp, setSubjectsCanHelp] = useState<string[]>([]);
   const [subjectsHelpNeeded, setSubjectsHelpNeeded] = useState<string[]>([]);
@@ -30,6 +31,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+
     if (!name || subjectsCanHelp.length === 0 || subjectsHelpNeeded.length === 0 || availability.length === 0 || !studyMethod) {
       setButtonError('Please fill out all sections of the form.');
       setTimeout(() => setButtonError(null), 3000); // Clear error after 3 seconds
@@ -51,9 +54,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
 
   const pillButtonClasses = (isSelected: boolean) => `
     py-2 px-4 w-full rounded-full text-sm font-semibold transition-all duration-300 ease-in-out border-2
-    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600
     ${isSelected
-        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-transparent shadow-lg transform scale-105'
+        ? 'bg-gradient-to-r from-blue-800 to-blue-600 text-white border-transparent shadow-lg transform scale-105'
         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100 hover:border-slate-400'
     }
   `;
@@ -71,7 +74,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full py-3 px-6 text-lg bg-slate-50 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+            className="w-full py-3 px-6 text-lg bg-slate-50 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-colors duration-300 focus:bg-slate-800 focus:text-white focus:placeholder-slate-400"
             placeholder="e.g., Jane Doe"
           />
         </div>
@@ -146,14 +149,25 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ onSubmit }) => {
 
         <button 
           type="submit" 
-          className={`w-full font-bold py-4 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ease-in-out
+          disabled={isLoading}
+          className={`w-full font-bold py-4 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ease-in-out flex justify-center items-center
             ${buttonError
               ? 'bg-white text-red-600 border-2 border-red-500 focus:ring-red-500'
-              : 'bg-blue-600 text-white border-2 border-transparent hover:bg-blue-700 transition-transform transform hover:scale-105 focus:ring-blue-500'
+              : 'bg-blue-700 text-white border-2 border-transparent hover:bg-blue-800 transition-transform transform hover:scale-105 focus:ring-blue-600 disabled:bg-blue-500 disabled:cursor-not-allowed disabled:transform-none'
             }`
           }
         >
-          {buttonError || 'Find My Study Crew'}
+          {isLoading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Finding Crew...
+            </>
+          ) : (
+            buttonError || 'Find My Study Crew'
+          )}
         </button>
       </form>
     </div>

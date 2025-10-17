@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 
 interface LoadingSpinnerProps {
@@ -21,8 +22,8 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message = "Getting thin
         const newPercentage = Math.min(prev + increment, 100);
         
         if (newPercentage < 100) {
-          // Random delay for the next update
-          const delay = Math.floor(Math.random() * 700) + 100; // 200ms to 800ms
+          // Random delay for the next update (70% faster)
+          const delay = Math.floor(Math.random() * 80) + 20; // 20ms to 100ms
           timeoutId = window.setTimeout(updatePercentage, delay);
         }
         

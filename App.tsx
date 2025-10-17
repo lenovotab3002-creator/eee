@@ -1,30 +1,36 @@
-
 import React, { useState } from 'react';
-import { StudentProfile, MatchedStudent, StudySessionData, View } from './types';
-import { MOCK_PROFILES } from './constants';
+import { StudentProfile, MatchedStudent, StudySessionData, View, Match } from './types';
+import { MOCK_PROFILES, MOCK_GROUPS } from './constants';
 import { findMatches } from './services/geminiService';
 import Header from './components/Header';
 import ProfileForm from './components/ProfileForm';
 import MatchList from './components/MatchList';
 import CollaborationSpace from './components/CollaborationSpace';
 import LandingPage from './components/LandingPage';
-import LoadingSpinner from './components/LoadingSpinner';
+import LoginModal from './components/LoginModal';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>(View.Home);
   const [userProfile, setUserProfile] = useState<StudentProfile | null>(null);
-  const [matches, setMatches] = useState<MatchedStudent[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [currentSession, setCurrentSession] = useState<StudySessionData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const handleProfileSubmit = async (profile: StudentProfile) => {
     setIsLoading(true);
     setError(null);
     setUserProfile(profile);
     try {
+      // Simulate a delay to show the loading state on the button
+      await new Promise(resolve => setTimeout(resolve, 1500));
       const foundMatches = await findMatches(profile, MOCK_PROFILES);
-      setMatches(foundMatches);
+      
+      // Combine individual matches with mock group matches for demonstration
+      const allMatches: Match[] = [...foundMatches, ...MOCK_GROUPS];
+      
+      setMatches(allMatches);
       setView(View.Matches);
     } catch (err) {
       console.error("Error finding matches:", err);
@@ -35,17 +41,25 @@ const App: React.FC = () => {
     }
   };
 
-  const handleStartStudying = (matchedStudent: MatchedStudent) => {
+  const handleStartStudying = (match: Match) => {
     if (!userProfile) return;
     
-    // Determine the common subject. Give priority to what the user needs help with.
-    const userNeeds = userProfile.subjectsHelpNeeded;
-    const partnerOffers = matchedStudent.subjectsCanHelp;
-    const commonSubject = userNeeds.find(subject => partnerOffers.includes(subject)) || userProfile.subjectsCanHelp.find(s => matchedStudent.subjectsHelpNeeded.includes(s)) || userNeeds[0];
+    const subject = 'topic' in match
+      ? match.topic
+      // For individual matches, find a common subject
+      : (() => {
+          const partner = match as MatchedStudent;
+          const userNeeds = userProfile.subjectsHelpNeeded;
+          const partnerOffers = partner.subjectsCanHelp;
+          return userNeeds.find(s => partnerOffers.includes(s)) || 
+                 userProfile.subjectsCanHelp.find(s => partner.subjectsHelpNeeded.includes(s)) || 
+                 userNeeds[0] || 
+                 "General Studies";
+      })();
 
     setCurrentSession({
-        partner: matchedStudent,
-        subject: commonSubject || "General Studies",
+        match,
+        subject,
     });
     setView(View.Collaboration);
   };
@@ -63,11 +77,17 @@ const App: React.FC = () => {
     setError(null);
   }
 
-  const renderContent = () => {
-    if (isLoading) {
-      return <LoadingSpinner message="Finding your study crew" />;
-    }
+  const handleGetStarted = () => {
+    setIsLoginModalOpen(true);
+  };
 
+  const handleLoginSuccess = () => {
+    setIsLoginModalOpen(false);
+    setView(View.Profile);
+  };
+
+
+  const renderContent = () => {
     if (error) {
        return <div className="text-center p-8">
            <p className="text-red-500 bg-red-100 p-4 rounded-md">{error}</p>
@@ -77,15 +97,15 @@ const App: React.FC = () => {
 
     switch (view) {
       case View.Home:
-        return <LandingPage onFindPeers={() => setView(View.Profile)} />;
+        return <LandingPage onFindPeers={handleGetStarted} />;
       case View.Profile:
-        return <ProfileForm onSubmit={handleProfileSubmit} />;
+        return <ProfileForm onSubmit={handleProfileSubmit} isLoading={isLoading} />;
       case View.Matches:
         return <MatchList matches={matches} onStartStudying={handleStartStudying} onFindNew={() => setView(View.Profile)}/>;
       case View.Collaboration:
         return currentSession && <CollaborationSpace sessionData={currentSession} onBack={handleBackToMatches} />;
       default:
-        return <LandingPage onFindPeers={() => setView(View.Profile)} />;
+        return <LandingPage onFindPeers={handleGetStarted} />;
     }
   };
 
@@ -95,6 +115,11 @@ const App: React.FC = () => {
       <main className="container mx-auto px-4 py-8 max-w-5xl">
         {renderContent()}
       </main>
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLogin={handleLoginSuccess}
+      />
     </div>
   );
 };

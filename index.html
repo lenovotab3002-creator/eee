@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,6 +15,16 @@
   }
 }
 </script>
+<style>
+  /* Overrides browser autofill to match the input's focus style (dark bg, white text) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #1e293b inset !important; /* Tailwind's slate-800 */
+      -webkit-text-fill-color: white !important;
+  }
+</style>
 </head>
   <body class="bg-slate-50">
     <div id="root"></div>

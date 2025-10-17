@@ -1,3 +1,4 @@
+// FIX: Removed self-import of 'StudentProfile' which was causing a declaration conflict.
 
 export interface StudentProfile {
   id: number;
@@ -7,11 +8,24 @@ export interface StudentProfile {
   availability: string[];
   studyMethod: string;
   avatarUrl: string;
+  isFriend?: boolean;
 }
 
 export interface MatchedStudent extends StudentProfile {
   matchReason: string;
 }
+
+export interface MatchedGroup {
+  id: number;
+  name: string;
+  members: StudentProfile[];
+  capacity: number;
+  matchReason: string;
+  topic: string;
+}
+
+export type Match = MatchedStudent | MatchedGroup;
+
 
 export enum View {
   Home,
@@ -21,7 +35,7 @@ export enum View {
 }
 
 export interface StudySessionData {
-    partner: MatchedStudent;
+    match: Match;
     subject: string;
 }
 
@@ -32,4 +46,23 @@ export interface StudyPlan {
         problem: string;
         solution: string;
     };
+}
+
+export interface ChatMessage {
+  sender: string; // The name of the sender, or 'You' for the current user
+  text: string;
+  timestamp: string;
+}
+
+export interface LeaderboardUser {
+  name: string;
+  avatarUrl: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  type: 'group' | 'individual';
+  users: LeaderboardUser[];
+  score: number;
+  topic?: string;
 }
